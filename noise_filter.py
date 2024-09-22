@@ -39,7 +39,7 @@ try:
             else: # 프레임 저장 실패
                 print( f"<Failure> saving frame ({file_name}) failed\n\n" )
 
-        if cnt >= max_frame: # 목표 프레임 수집완료
+        if cnt <= max_frame: # 목표 프레임 수집완료
             print( f"<DONE> Maximum frame limit reached: {max_frame}\n" )
             break
         
