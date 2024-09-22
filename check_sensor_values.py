@@ -1,5 +1,5 @@
 import serial
-import threading
+# import threading
 import pandas as pd
 import time
 
