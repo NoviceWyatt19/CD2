@@ -7,7 +7,7 @@ LiquidCrystal_I2C lcd(0x27,20,4); // 접근주소 : 0x3F or 0x27
 // Simpletimer timer;
 
 int mq3Pin = A5; // alcol sensor A5
-int PIR = D7; // 센서 변수를 D7에 초기화
+int PIR = 7; // 센서 변수를 D7에 초기화
 
 struct HeartPulse
 {
@@ -23,15 +23,15 @@ void setup() {
 }
 
 void loop() {
-  int value1 = analogRead(mq3Pin);  // 첫 번째 센서 값 읽기
-  int value2 = digitalRead(PIR);  // 두 번째 센서 값 읽기
-  int value3 = analogRead(heart.PulseSensorPurplePin);  // 세 번째 센서 값 읽기
+  int alcolValue = analogRead(mq3Pin);  // 첫 번째 센서 값 읽기
+  int pirValue = digitalRead(PIR);  // 두 번째 센서 값 읽기
+  int heartValue = analogRead(heart.PulseSensorPurplePin);  // 세 번째 센서 값 읽기
 
-  Serial.print(value1);
+  Serial.print(alcolValue);
   Serial.print(",");
-  Serial.print(value2);
+  Serial.print(pirValue);
   Serial.print(",");
-  Serial.println(value3);  // 마지막 값은 println으로 줄바꿈 포함
+  Serial.println(heartValue);  // 마지막 값은 println으로 줄바꿈 포함
 
   Serial.flush();  // 전송 버퍼를 비우기
   

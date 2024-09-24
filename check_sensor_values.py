@@ -26,8 +26,8 @@ with open( 'sensor_data.csv', 'a' ) as f:
                 sensor_values = line.split( ',' ) # sensor_values = [value1, value2, value3]
                 values_db.append( sensor_values )
 
-                print( 10 * '-' )
-                print( f"value1 : {sensor_values[0]} \n value2 : {sensor_values[1]} \n value3 : {sensor_values[2]} \n\n" )
+                print( 10 * '-' +f'{len(values_db)}')
+                print( f"value1 : {sensor_values[0]} \nvalue2 : {sensor_values[1]} \nvalue3 : {sensor_values[2]} \n\n" )
                 
 
                 if len(values_db) >= sample_size:
@@ -39,5 +39,6 @@ with open( 'sensor_data.csv', 'a' ) as f:
                     
                     print( f'{len(values_db)}개의 데이터를 {file_name}에 저장하였습니다.' )
                     values_db.clear()
+                    break
     finally:
         ser.closr()
