@@ -3,10 +3,14 @@ import serial
 import pandas as pd
 import time
 
-SERIAL_PATH = '/dev/ttyUSB0'
+SERIAL_PATH = '/dev/cu.usbmodemF412FA6F49D82'
 PORT_SPEED = 9600 # 115200 전송 데이터 형식이 밀릴경우 바꾸기
 
-ser = serial.Serial( SERIAL_PATH, PORT_SPEED, timeout=2 )
+ser = serial.Serial( 
+    port=SERIAL_PATH,
+    baudrate=PORT_SPEED,
+    timeout= 2
+)
 
 values_db = []
 sample_size = 100

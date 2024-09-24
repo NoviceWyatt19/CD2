@@ -6,7 +6,7 @@ LiquidCrystal_I2C lcd(0x27,20,4); // 접근주소 : 0x3F or 0x27
 
 Simpletimer timer;
 
-int mq3Pin = A5;    // MQ-3 센서핀을 아두이노 보드의 A5 핀으로 설정
+int mq3Pin = A3;    // MQ-3 센서핀을 아두이노 보드의 A3 핀으로 설정
 int PulseSensorPurplePin = A0; // A0에 심박 센서를 할당
 int PIR = 7; // 센서 변수를 D7에 초기화
 int state = 0; // 센서 상태값 저장 변수 (0:Low,1:High)
@@ -56,7 +56,7 @@ void Sleep_Sensor(){
 
     if (inChar == "SLEEP_TRUE") {
       lcd.setCursor(0,3); // 4번째 줄 문자열 출력
-      lcd.print("Sleep:" + "Warning!");
+      lcd.print("Sleep: Warning!");
       
       Sound_Do5(0.5);
       delay(100);
@@ -68,7 +68,7 @@ void Sleep_Sensor(){
       delay(100);
     } else {
       lcd.setCursor(0,3); // 4번째 줄 문자열 출력
-      lcd.print("Sleep:" + "Safety");
+      lcd.print("Sleep: Safety");
     }
     delay(1000);
   }
@@ -81,8 +81,8 @@ void Alcol_Sensor()
   Serial.println(analogRead(mq3Pin));   // MQ-3 센서 출력값을 시리얼 모니터로 출력
   int alcol_val = analogRead(mq3Pin);          
   if(alcol_val>=600){                  // 센서 값이 600 이상이면
-    lcd.setCursor(0,0); // 1번째 줄 문자열 출력
-    lcd.print("Alcol:" + alcol_val + " Warning!");
+    lcd.setCursor(11,0); // 1번째 줄 문자열 출력
+    lcd.print(alcol_val);
 
     Sound_Do5(0.5);
     delay(100);
@@ -94,12 +94,12 @@ void Alcol_Sensor()
     delay(100);
   }  
   else if(alcol_val>=200 && alcol_val<600){  // 센서 값이 200 이상, 600 미만이면
-    lcd.setCursor(0,0); // 1번째 줄 문자열 출력
-    lcd.print("Alcol:" + alcol_val + " Caution");
+    lcd.setCursor(11,0); // 1번째 줄 문자열 출력
+    lcd.print(alcol_val);
   }
   else if(alcol_val<200){               // 센서 값이 200 미만 이면
-    lcd.setCursor(0,0); // 1번째 줄 문자열 출력
-    lcd.print("Alcol:" + alcol_val + " Safety");
+    lcd.setCursor(11,0); // 1번째 줄 문자열 출력
+    lcd.print(alcol_val);
   }
   delay(1000);
 }
@@ -112,8 +112,8 @@ void Heart_Sensor() {
   Serial.println(Signal); // 현재 심박수를 출력합니다.
 
   if (Signal > Threshold) {
-    lcd.setCursor(0,2); // 3번째 줄 문자열 출력
-    lcd.print("Heart:" + Signal + " Warning!");
+    lcd.setCursor(11,2); // 3번째 줄 문자열 출력
+    lcd.print(Signal);
     
     Sound_Do5(0.5); // 특정 심박수 이상 시 소리를 낸다.
     delay(100);
@@ -126,8 +126,8 @@ void Heart_Sensor() {
   }
 
   else {
-    lcd.setCursor(0,2); // 3번째 줄 문자열 출력
-    lcd.print("Heart:" + Signal + " Safety");
+    lcd.setCursor(11,2); // 3번째 줄 문자열 출력
+    lcd.print(Signal);
   }
   delay(1000); // 1초마다 체크
 }
@@ -142,7 +142,7 @@ void PIR_Sensor()
 
   if(state==0){ // 센서 값이 0일 경우
     lcd.setCursor(0,1); // 2번째 줄 문자열 출력
-    lcd.print("PIR "+"Warning!");
+    lcd.print("PIR Warning!");
     
     Serial.println("ON"); // 시리얼 통신에 센서값 출력
     Sound_Do5(0.5); // 센서 감지시 소리를 낸다.
@@ -156,7 +156,7 @@ void PIR_Sensor()
   }
   else { // 센서 값이 1일 경우
     lcd.setCursor(0,1); // 2번째 줄 문자열 출력
-    lcd.print("PIR "+"Safety");
+    lcd.print("PIR Safety");
     
     Serial.println("OFF"); // 시리얼 통신에 센서값 출력
   }

@@ -1,5 +1,8 @@
 // #include <Simpletimer.h>
 #include <Wire.h>
+#include <LiquidCrystal.h>
+#include <LiquidCrystal_I2C.h> // LCD 2004 I2C용 라이브러리
+LiquidCrystal_I2C lcd(0x27,20,4); // 접근주소 : 0x3F or 0x27
 
 // Simpletimer timer;
 
