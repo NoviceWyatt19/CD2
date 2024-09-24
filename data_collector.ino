@@ -17,7 +17,6 @@ struct HeartPulse
 void setup() {
   Serial.begin(9600);  // 빠른 시리얼 통신 9600, 115200
   pinMode(PIR,INPUT); //센서를 입력으로 설정
-  pinMode(PIR,INPUT); //센서를 입력으로 설정
 }
 
 void loop() {
