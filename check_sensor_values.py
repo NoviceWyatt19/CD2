@@ -4,7 +4,7 @@ import pandas as pd
 import time
 
 SERIAL_PATH = '/dev/cu.usbmodemF412FA6F49D82'
-PORT_SPEED = 9600 # 115200 전송 데이터 형식이 밀릴경우 바꾸기
+PORT_SPEED = 9600 # 115200 전송 데이터 형식이 밀릴 경우 바꾸기
 
 ser = serial.Serial( 
     port=SERIAL_PATH,
@@ -41,4 +41,4 @@ with open( 'sensor_data.csv', 'a' ) as f:
                     values_db.clear()
                     break
     finally:
-        ser.closr()
+        ser.close()
