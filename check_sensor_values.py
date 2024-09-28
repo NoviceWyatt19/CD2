@@ -24,14 +24,15 @@ def read_sensing_values(db, sampling_size, data_source):
             db.append( sensor_values )
 
             print( 10 * '-' +f'{len(db)}')
-            print( f"value1 : {sensor_values[0]} \nvalue2 : {sensor_values[1]} \nvalue3 : {sensor_values[2]} \n\n" )
+            print( f"value1(alcol) : {sensor_values[0]} \nvalue2(pir) : {sensor_values[1]} \nvalue3(heart) : {sensor_values[2]} \n\n" )
 
 def save_db(db, file):
     df = pd.DataFrame(
         db,
         columns=['Sensor1', 'Sensor2', 'Sensor3'],
     )
-    df.to_csv( file, index= False)
+    file_path = f'/Users/wyatt/Desktop/CD2_project/Sensor_db/{file}' # 라즈베리파이에서는 경로를 변경해야함
+    df.to_csv( file_path, index= False)
 
     db.clear()
 
