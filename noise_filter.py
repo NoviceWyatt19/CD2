@@ -1,56 +1,54 @@
 import cv2
 import numpy as np
+import os
 
-def is_blurry( img ):
-    gray = cv2.cvtColor( img, cv2.COLOR_BGR2GRAY )
-    laplacian_var = cv2.Laplacian( gray, cv2.CV_64F ).var()
+def is_blurry(img):
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
+    return laplacian_var < 50 # 확인 후 조정
 
-    return laplacian_var < 100 # 확인 후 조정
-
-def is_over_exposed( img ):
-    gray = cv2.cvtColor( img, cv2.COLOR_BGR2GRAY )
-
-    return np.mean( gray ) > 200 # 너무 밝을 때
+def is_over_exposed(img):
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    return np.mean(gray) > 250 # 너무 밝을 때
 
 file_type = ['jpeg', 'jpg', 'png']
 cnt = 1
-max_frame = 200
+max_frame = 100
 
-cap = cv2.VideoCapture( 0 )
+cap = cv2.VideoCapture(0)
+
+save_dir = '/Users/wyatt/Desktop/CD2_project/cam_frame'
+os.makedirs(save_dir, exist_ok=True)  # 폴더가 없으면 생성
 
 if not cap.isOpened():
-    print( "<Failure> Unable to access the cam\n\n" )
+    print("<Failure> Unable to access the cam\n\n")
     exit()
 
 try:
-
     while True:
         ret, frame = cap.read()
-        if not ret: # 프레임 촬영 실패
-            print( "<Failure> frame capture failed\n\n" )
-            break
+        if not ret:  # 프레임 촬영 실패
+            print("<Failure> frame capture failed, retrying...\n")
+            continue  # 프레임 캡처를 재시도
 
-        if not is_blurry( frame ) and not is_over_exposed( frame ): # 유효이미지 일때
-            file_name = f'valid_frame_{cnt}.{file_type[0]}'
+        if not is_blurry(frame) and not is_over_exposed(frame):  # 유효이미지 일때
+            file_name = os.path.join(save_dir, f'valid_frame_{cnt}.{file_type[0]}')
             
-            if cv2.imwrite( file_name, frame ):
-                print( f"<Save> Frame {cnt} saved\n" )
+            if cv2.imwrite(file_name, frame):
+                print(f"<Save> Frame {cnt} saved to {file_name}\n")
                 cnt += 1
-            else: # 프레임 저장 실패
-                print( f"<Failure> saving frame ({file_name}) failed\n\n" )
+            else:  # 프레임 저장 실패
+                print(f"<Failure> saving frame ({file_name}) failed\n\n")
 
-        if cnt <= max_frame: # 목표 프레임 수집완료
-            print( f"<DONE> Maximum frame limit reached: {max_frame}\n" )
+        if cnt >= max_frame: # 목표 프레임 수집완료
+            print(f"<DONE> Maximum frame limit reached: {max_frame}\n")
             break
-        
-        # if cnt % 10 == 0: # 10 프레임마다
-        #     cv2.imshow("Frame", frame) # 시각화
-        
-        if cv2.waitKey( 1 ) & 0xFF == ord( 'q' ):
-            print( "<DONE> User manually terminated the program\n")
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            print("<DONE> User manually terminated the program\n")
             break
 
 finally:
     cap.release() # 카메라 해제
     cv2.destroyAllWindows() # 모든 opencv 윈도우 종료
-    print( "<PROGRAM OFF> Image frame capture done\n\n")
+    print("<PROGRAM OFF> Image frame capture done\n\n")
