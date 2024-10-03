@@ -46,5 +46,5 @@ def recognize_user(new_image_path):
         print("사용자가 아닙니다.")
 
 # 새로운 이미지 경로
-new_image_path = f'{s.dataset_user['embedding']}.{s.file_type[1]}'  # 새로운 이미지 경로 수정
-recognize_user(new_image_path)
+embeded_img_path = f'{s.dataset_user['embedding']}.{s.file_type[1]}'  # 새로운 이미지 경로 수정
+recognize_user(embeded_img_path)
