@@ -2,13 +2,11 @@ import serial
 # import threading
 import pandas as pd
 import time
-
-SERIAL_PATH = '/dev/cu.usbmodemF412FA6F49D82'
-PORT_SPEED = 9600 # 115200 전송 데이터 형식이 밀릴 경우 바꾸기
+import settings as s
 
 ser = serial.Serial( 
-    port=SERIAL_PATH,
-    baudrate=PORT_SPEED,
+    port=s.ser_setting['Mac'],
+    baudrate=s.ser_setting['Speed'][0],
     timeout= 2
 )
 
@@ -31,7 +29,7 @@ def save_db(db, file):
         db,
         columns=['Sensor1', 'Sensor2', 'Sensor3'],
     )
-    file_path = f'/Users/wyatt/Desktop/CD2_project/Sensor_db/{file}' # 라즈베리파이에서는 경로를 변경해야함
+    file_path = f'{s.path_tpye['Mac']}Sensor_db/{file}' # 라즈베리파이에서는 경로를 변경해야함
     df.to_csv( file_path, index= False)
 
     db.clear()

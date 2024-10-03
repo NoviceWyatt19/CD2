@@ -1,3 +1,4 @@
+import settings as s
 import cv2
 import numpy as np
 import os
@@ -11,13 +12,13 @@ def is_over_exposed(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     return np.mean(gray) > 250 # 너무 밝을 때
 
-file_type = ['jpeg', 'jpg', 'png']
 cnt = 1
 max_frame = 100
 
 cap = cv2.VideoCapture(0)
 
-save_dir = '/Users/wyatt/Desktop/CD2_project/cam_frame'
+save_dir = f'{s.save_cam_frame['Mac']}' # /Users/wyatt/Desktop/CD2_project/cam_frame/
+print(f'Set save directory : {save_dir}')
 os.makedirs(save_dir, exist_ok=True)  # 폴더가 없으면 생성
 
 if not cap.isOpened():
@@ -32,7 +33,7 @@ try:
             continue  # 프레임 캡처를 재시도
 
         if not is_blurry(frame) and not is_over_exposed(frame):  # 유효이미지 일때
-            file_name = os.path.join(save_dir, f'valid_frame_{cnt}.{file_type[0]}')
+            file_name = os.path.join(save_dir, f'valid_frame_{cnt}.{s.file_type[0]}')
             
             if cv2.imwrite(file_name, frame):
                 print(f"<Save> Frame {cnt} saved to {file_name}\n")

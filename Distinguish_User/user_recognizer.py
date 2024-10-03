@@ -1,11 +1,12 @@
 # user_recognizer.py
 import os
 import numpy as np
+import settings as s
 from sklearn.metrics.pairwise import euclidean_distances
 from embedding_img import *
 
 # 디랙토리 생성
-directory = './recog_user'
+directory = f'{s.path_tpye['Mac']}recog_user'
 try:
     os.mkdir(directory)
     #현재 폴더 경로; 작업 폴더 기준
@@ -45,5 +46,5 @@ def recognize_user(new_image_path):
         print("사용자가 아닙니다.")
 
 # 새로운 이미지 경로
-new_image_path = 'path_to_new_image.jpg'  # 새로운 이미지 경로 수정
+new_image_path = f'{s.dataset_user['embedding']}.{s.file_type[1]}'  # 새로운 이미지 경로 수정
 recognize_user(new_image_path)
