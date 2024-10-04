@@ -6,20 +6,20 @@ from sklearn.metrics.pairwise import euclidean_distances
 from embedding_img import *
 
 # 디랙토리 생성
-directory = f'{s.path_tpye['Mac']}recog_user'
-try:
-    os.mkdir(directory)
-    #현재 폴더 경로; 작업 폴더 기준
-    print(f"{directory} is made in {os.getcwd()}")
-    work_place = os.getcwd()
+directory = f'{s.dir_path['Mac']['comp_db']}'
 
-except FileExistsError:
-    print(f"{directory} already exist")
+print(f"{directory} is in {os.getcwd()}")
+
+if not os.path.exists(directory):
+    print(f"{directory} dosen't exist")
 
 # 사용자 및 다른 인물 이미지 디렉토리
 try:
-    other_dir = f'{work_place}/recog_user/other'
-    user_dir = f'{work_place}/recog_user/user'
+    # other_dir -> kaggle에서 jpg 긁어오기
+    # user_dir -> 전처리 파일에서 가져오기
+    other_dir = f'{directory}/other'
+    user_dir = f'{directory}/user'
+    
 except FileExistsError:
     print("<ERROR> please, check your directory")
 
@@ -46,5 +46,5 @@ def recognize_user(new_image_path):
         print("사용자가 아닙니다.")
 
 # 새로운 이미지 경로
-embeded_img_path = f'{s.dataset_user['embedding']}.{s.file_type[1]}'  # 새로운 이미지 경로 수정
+embeded_img_path = f'{s.dir_path['Mac']['embedding']}.{s.file_type[1]}'  # 새로운 이미지 경로 수정
 recognize_user(embeded_img_path)
