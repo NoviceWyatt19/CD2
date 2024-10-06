@@ -3,7 +3,6 @@ import os
 import numpy as np
 import settings as s
 from sklearn.metrics.pairwise import euclidean_distances
-from embedding_img import *
 
 # 디랙토리 생성
 directory = f'{s.dir_path['Mac']['comp_db']}'

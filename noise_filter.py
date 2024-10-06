@@ -35,7 +35,7 @@ def main():
                 continue  # 프레임 캡처를 재시도
 
             if not is_blurry(frame) and not is_over_exposed(frame):  # 유효이미지 일때
-                file_name = os.path.join(save_dir, f'valid_frame_{cnt}.{s.file_type[0]}')
+                file_name = os.path.join(save_dir, f'valid_frame_{cnt}.{s.file_type[2]}')
                 
                 if cv2.imwrite(file_name, frame):
                     print(f"<Save> Frame {cnt} saved to {file_name}\n")

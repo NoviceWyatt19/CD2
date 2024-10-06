@@ -7,7 +7,7 @@ path_tpye = {
 dataset_user = {
     'cam' : 'cam_frame/',
     'mctnn' : 'detected_face_frame/',
-    'embedding' : 'preprocessing_frame/',
+    'preporcessing' : 'preprocessing_frame/',
     'data_set' : 'recog_user/'
 }
 img_name = 'valid_frame_'
@@ -23,7 +23,7 @@ dir_path = {
     'Mac' : {
         'cam' : f'{path_tpye['Mac']}{dataset_user['cam']}', # cam_frame
         'mctnn' : f'{path_tpye['Mac']}{dataset_user['mctnn']}', # detected_face_frame
-        'embedding' : f'{path_tpye['Mac']}{dataset_user['embedding']}', # preprocessing_frame
+        'preprocessing' : f'{path_tpye['Mac']}{dataset_user['preprocessing']}', # preprocessing_frame
         'comp_db' : f'{path_tpye['Mac']}{dataset_user['data_set']}' # recog_user
     },
     'Raspi' : {},
