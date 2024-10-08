@@ -11,7 +11,7 @@ ser = serial.Serial(
 )
 
 values_db = []
-sample_size = 100
+sample_size = 200
 
 def read_sensing_values(db, sampling_size, data_source):
     while len(db) < sampling_size:

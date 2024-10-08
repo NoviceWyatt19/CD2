@@ -17,7 +17,7 @@ def is_over_exposed(img):
 def main():
     cnt = 1
 
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
 
     save_dir = f'{s.dir_path['Mac']['cam']}' # /Users/wyatt/Desktop/CD2_project/cam_frame/
     print(f'Set save directory : {save_dir}')
@@ -37,9 +37,13 @@ def main():
             if not is_blurry(frame) and not is_over_exposed(frame):  # 유효이미지 일때
                 file_name = os.path.join(save_dir, f'valid_frame_{cnt}.{s.file_type[2]}')
                 
-                if cv2.imwrite(file_name, frame):
+                if os.path.exists(file_name):
                     print(f"<Save> Frame {cnt} saved to {file_name}\n")
                     cnt += 1
+                    if os.path.exists(file_name):
+                        print("exist same name, delete existing file")
+                        os.remove(file_name)
+                    cv2.imwrite(file_name, frame)
                 else:  # 프레임 저장 실패
                     print(f"<Failure> saving frame ({file_name}) failed\n\n")
 
