@@ -1,49 +1,85 @@
-# user_recognizer.py
-import os
+import cv2
 import numpy as np
-import settings as s
-from sklearn.metrics.pairwise import euclidean_distances
+from mtcnn import MTCNN
+from keras.models import load_model
+from sklearn.preprocessing import Normalizer
+from numpy import expand_dims
+from scipy.spatial.distance import cosine
+import os
 
-# 디랙토리 생성
-directory = f'{s.dir_path['Mac']['comp_db']}'
+# FaceNet 모델과 MTCNN 로드
+facenet_model = load_model('facenet_keras.h5')
+mtcnn = MTCNN()
 
-print(f"{directory} is in {os.getcwd()}")
+# 얼굴 임베딩 생성 함수
+def get_embedding(model, face_pixels):
+    face_pixels = face_pixels.astype('float32')
+    mean, std = face_pixels.mean(), face_pixels.std()
+    face_pixels = (face_pixels - mean) / std
+    face_pixels = expand_dims(face_pixels, axis=0)
+    embedding = model.predict(face_pixels)
+    return embedding[0]
 
-if not os.path.exists(directory):
-    print(f"{directory} dosen't exist")
+# 코사인 유사도 계산 함수
+def is_match(known_embedding, candidate_embedding, threshold=0.5):
+    score = cosine(known_embedding, candidate_embedding)
+    return score <= threshold
 
-# 사용자 및 다른 인물 이미지 디렉토리
-try:
-    # other_dir -> kaggle에서 jpg 긁어오기
-    # user_dir -> 전처리 파일에서 가져오기
-    other_dir = f'{directory}/other'
-    user_dir = f'{directory}/user'
-    
-except FileExistsError:
-    print("<ERROR> please, check your directory")
+# 임베딩을 데이터베이스로부터 로드
+database = {}
+if os.path.exists('database'):
+    for filename in os.listdir('database'):
+        if filename.endswith('.npy'):
+            name = filename.replace('.npy', '')
+            database[name] = np.load(os.path.join('database', filename))
 
-# 임베딩 생성
-user_embeddings, other_embeddings = create_embeddings(user_dir, other_dir)
+# 새로운 유저를 추가하는 함수
+def add_new_user(embedding, name):
+    # 새로운 유저의 임베딩을 저장
+    np.save(f'database/{name}.npy', embedding)
+    database[name] = embedding
+    print(f'{name} has been added to the database.')
 
-# 새로운 이미지의 임베딩 생성
-def recognize_user(new_image_path):
-    new_embedding = get_embedding(model, new_image_path)  # facenet_embedding 모듈에서 get_embedding 함수 호출
+# 웹캡 캡처 시작
+cap = cv2.VideoCapture(0)
 
-    # 사용자와 다른 인물 임베딩 간의 거리 계산
-    user_distances = euclidean_distances(new_embedding, user_embeddings)
-    other_distances = euclidean_distances(new_embedding, other_embeddings)
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
 
-    # 거리 계산 및 결과 확인
-    user_min_distance = np.min(user_distances)
-    other_min_distance = np.min(other_distances)
+    # 얼굴 탐지
+    results = mtcnn.detect_faces(frame)
+    if results:
+        for result in results:
+            x, y, width, height = result['box']
+            face = frame[y:y+height, x:x+width]
 
-    threshold = 0.5  # 임계값 설정
+            # 얼굴 크기 조정 (160x160, FaceNet 요구사항)
+            face = cv2.resize(face, (160, 160))
 
-    if user_min_distance < threshold:
-        print("사용자입니다.")
-    else:
-        print("사용자가 아닙니다.")
+            # 얼굴 임베딩 생성
+            embedding = get_embedding(facenet_model, face)
 
-# 새로운 이미지 경로
-embeded_img_path = f'{s.dir_path['Mac']['embedding']}.{s.file_type[1]}'  # 새로운 이미지 경로 수정
-recognize_user(embeded_img_path)
+            # 데이터베이스와 비교
+            match = False
+            for name, db_embedding in database.items():
+                if is_match(db_embedding, embedding):
+                    match = True
+                    print(f'User matched: {name}')
+                    break
+
+            if not match:
+                print('Unknown user')
+                user_input = input('New user detected. Would you like to add this user? (y/n): ')
+                if user_input.lower() == 'y':
+                    new_user_name = input('Enter new user name: ')
+                    add_new_user(embedding, new_user_name)
+
+    cv2.imshow('frame', frame)
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cap.release()
+cv2.destroyAllWindows()
