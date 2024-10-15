@@ -2,12 +2,16 @@
 #include <Wire.h>
 #include <LiquidCrystal.h>
 #include <LiquidCrystal_I2C.h> // LCD 2004 I2C용 라이브러리
-LiquidCrystal_I2C lcd(0x27,20,4); // 접근주소 : 0x3F or 0x27
+LiquidCrystal_I2C lcd(0x27,20,4); // 접근주소 : 0x3F or 0x27 A4, A5
 
 Simpletimer timer;
 
+int sensor=A2; // 압전센서 핀을 A2핀으로 설정
 int mq3Pin = A3;    // MQ-3 센서핀을 아두이노 보드의 A3 핀으로 설정
+int in1 = 7; //in1 D7할당
+int in2 = 5; //in2 D5할당
 int PulseSensorPurplePin = A0; // A0에 심박 센서를 할당
+
 int state = 0; // 센서 상태값 저장 변수 (0:Low,1:High)
 int piezo = 8;  // 피에조 부저를 D8에 초기화
 int Signal; // HeartSensor 관련 변수
@@ -18,11 +22,12 @@ int alcol_sensor_val = 600; // alcolSensor 관련 변수
 
 void setup() {
   pinMode(piezo, OUTPUT); //piezo를 출력으로 설정
-  pinMode(PIR,INPUT); //센서를 입력으로 설정
   Serial.begin(9600); //시리얼 통신, 속도는 9600
   Serial.println("$$$Arduino System Online.$$$"); // 라즈베리파이 연결 전송메세지
   inChar = "a";
   alcol_sensor_val = 600;
+  pinMode(in1,OUTPUT);
+  pinMode(in2,OUTPUT);
 
   lcd.init(); // LCD 초기화
   lcd.backlight(); // 백라이트 켜기
@@ -115,25 +120,29 @@ void Alcol_Sensor()
 void Heart_Sensor() {
   Signal = analogRead(PulseSensorPurplePin);
   Serial.println(Signal); // 현재 심박수를 출력합니다.
+  int val = analogRead(sensor);
 
-  if (Signal > Threshold) {
+  if(val<0){
+    if (Signal > Threshold) {
+      Sound_Do5(0.5); // 특정 심박수 이상 시 소리를 낸다.
+      delay(100);
+      Sound_Re5(0.5);
+      delay(100);
+      Sound_Do5(0.5); 
+      delay(100);
+      Sound_Re5(0.5);
+      delay(100);
+    }
     lcd.setCursor(11,2); // 3번째 줄 문자열 출력
     lcd.print(Signal);
-    
-    Sound_Do5(0.5); // 특정 심박수 이상 시 소리를 낸다.
-    delay(100);
-    Sound_Re5(0.5);
-    delay(100);
-    Sound_Do5(0.5); 
-    delay(100);
-    Sound_Re5(0.5);
-    delay(100);
+    lcd.print(" ");
+  }
+  else{
+    lcd.setCursor(11,2); // 3번째 줄 문자열 출력
+    lcd.print("None");
   }
 
-  else {
-    lcd.setCursor(11,2); // 3번째 줄 문자열 출력
-    lcd.print(Signal);
-  }
+  
   delay(1000); // 1초마다 체크
 }
 
@@ -141,6 +150,13 @@ void Heart_Sensor() {
 // 구동이 올바르게 되는지 확인하기 위한 루프 종료시 발생하는 함수
 
 void End_Loop(){
+  digitalWrite(in1,HIGH);
+  digitalWrite(in2,LOW);
+  delay(1000);
+
+  digitalWrite(in1,LOW);
+  digitalWrite(in2,LOW);
+
   Sound_Do6(0.5);
   delay(1000);
 }

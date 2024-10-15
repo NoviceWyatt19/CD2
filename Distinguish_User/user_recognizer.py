@@ -1,3 +1,4 @@
+import settings as s
 import cv2
 import numpy as np
 from mtcnn import MTCNN
@@ -10,6 +11,13 @@ import os
 # FaceNet 모델과 MTCNN 로드
 facenet_model = load_model('facenet_keras.h5')
 mtcnn = MTCNN()
+
+# 새로운 유저를 추가
+def add_new_user(embedding, name):
+    # 새로운 유저의 임베딩을 저장
+    np.save(f'database/{name}.npy', embedding)
+    database[name] = embedding
+    print(f'{name} has been added to the database.')
 
 # 얼굴 임베딩 생성 함수
 def get_embedding(model, face_pixels):
@@ -25,20 +33,13 @@ def is_match(known_embedding, candidate_embedding, threshold=0.5):
     score = cosine(known_embedding, candidate_embedding)
     return score <= threshold
 
-# 임베딩을 데이터베이스로부터 로드
-database = {}
+# 임베딩을 데이터베이스에서 로드
+database = s.dir_path["preprocessing"]
 if os.path.exists('database'):
     for filename in os.listdir('database'):
         if filename.endswith('.npy'):
             name = filename.replace('.npy', '')
             database[name] = np.load(os.path.join('database', filename))
-
-# 새로운 유저를 추가하는 함수
-def add_new_user(embedding, name):
-    # 새로운 유저의 임베딩을 저장
-    np.save(f'database/{name}.npy', embedding)
-    database[name] = embedding
-    print(f'{name} has been added to the database.')
 
 # 웹캡 캡처 시작
 cap = cv2.VideoCapture(0)

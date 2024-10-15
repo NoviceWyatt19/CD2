@@ -55,6 +55,13 @@ def mask_image(image, start_point, end_point):
     cv2.rectangle(masked_image, start_point, end_point, (0, 0, 0), -1)  # 사각형 부분을 검은색으로
     return masked_image
 
+# 이미지 수평 반전
+def horizontal_flip(image):
+    dst_image = image.copy()
+    _, width, _ = dst_image.shape
+    flipped_left = cv2.flip(dst_image[:, : width//2], 1)
+    flipped_right = cv2.flip(dst_image[:, width//2 : ], 1)
+    return {"left" : flipped_left, "right" : flipped_right}
 
 # 데이터 증강
 def augment_images(input_folder, output_folder):
@@ -68,12 +75,18 @@ def augment_images(input_folder, output_folder):
 
             if image is None:
                 continue
+            # 수평 반전
+            flipped = horizontal_flip(image)
+            flipped_left_filename = f"{filename.split('.')[0]}_flipped_left.png"
+            flipped_right_filename = f"{filename.split('.')[0]}_flipped_right.png"
+            cv2.imwrite(os.path.join(output_folder, flipped_left_filename), flipped['left'])
+            cv2.imwrite(os.path.join(output_folder, flipped_right_filename), flipped['right'])
 
             # RGB 채널 분리
             (B, G, R) = cv2.split(image)
 
-            # 이미지 회전: 30도, 90도, 180도, 200도
-            angles = [30, 90, 180, 200]
+            # 이미지 회전: 10~30 + 40
+            angles = [5, 10, 15, 20, 30, 40]
             for angle in angles:
                 rotated = rotate_image(image, angle)
                 rotated_filename = f"{filename.split('.')[0]}_rotated_{angle}.png"
@@ -85,9 +98,9 @@ def augment_images(input_folder, output_folder):
             cv2.imwrite(os.path.join(output_folder, noisy_filename), noisy_image)
 
             # RGB 채널 저장 (각각 분리된 채널로 저장)
-            cv2.imwrite(os.path.join(output_folder, f"{filename.split('.')[0]}_R.png"), R)
-            cv2.imwrite(os.path.join(output_folder, f"{filename.split('.')[0]}_G.png"), G)
-            cv2.imwrite(os.path.join(output_folder, f"{filename.split('.')[0]}_B.png"), B)
+            cv2.imwrite(os.path.join(output_folder, f"{filename.split('.')[0]}_Red.png"), R)
+            cv2.imwrite(os.path.join(output_folder, f"{filename.split('.')[0]}_Green.png"), G)
+            cv2.imwrite(os.path.join(output_folder, f"{filename.split('.')[0]}_Blue.png"), B)
 
             # 이미지의 일부분을 검게 가리기 (이미지 중간 부분을 예시로 마스킹)
             h, w = image.shape[:2]

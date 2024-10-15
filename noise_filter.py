@@ -30,6 +30,8 @@ def main():
     try:
         while True:
             ret, frame = cap.read()
+            cv2.imshow("Capture", frame)
+            
             if not ret:  # 프레임 촬영 실패
                 print("<Failure> frame capture failed, retrying...\n")
                 continue  # 프레임 캡처를 재시도

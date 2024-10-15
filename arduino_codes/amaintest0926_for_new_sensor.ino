@@ -6,6 +6,7 @@ LiquidCrystal_I2C lcd(0x27,20,4); // 접근주소 : 0x3F or 0x27
 
 Simpletimer timer;
 
+int sensor=A2 // 압전 센서핀을  A2핀으로 설정
 int mq3Pin = A3;    // MQ-3 센서핀을 아두이노 보드의 A3 핀으로 설정
 int PulseSensorPurplePin = A0; // A0에 심박 센서를 할당
 int state = 0; // 센서 상태값 저장 변수 (0:Low,1:High)
@@ -126,27 +127,16 @@ void Alcol_Sensor()
 void Heart_Sensor() {
   Signal = analogRead(PulseSensorPurplePin);
   Serial.println(Signal); // 현재 심박수를 출력합니다.
+  analogRead(sensor);
+  if(val>120){
+    z
 
-  if (Signal > Threshold) {
-    lcd.setCursor(11,2); // 3번째 줄 문자열 출력
-    lcd.print(Signal);
-    Heart_Flag = 1;
-    
-    Sound_Do5(0.5); // 특정 심박수 이상 시 소리를 낸다.
-    delay(100);
-    Sound_Re5(0.5);
-    delay(100);
-    Sound_Do5(0.5); 
-    delay(100);
-    Sound_Re5(0.5);
-    delay(100);
+  }
+  else{
+
   }
 
-  else {
-    lcd.setCursor(11,2); // 3번째 줄 문자열 출력
-    lcd.print(Signal);
-    Heart_Flag = 0;
-  }
+  
   delay(1000); // 1초마다 체크
 }
 
