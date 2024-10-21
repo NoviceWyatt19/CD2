@@ -1,3 +1,4 @@
+# classifier model for eye state classification
 import os
 import random
 

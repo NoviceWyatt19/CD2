@@ -1,4 +1,4 @@
-import settings as s
+import configuration as con
 import cv2
 import numpy as np
 from mtcnn import MTCNN
@@ -34,7 +34,7 @@ def is_match(known_embedding, candidate_embedding, threshold=0.5):
     return score <= threshold
 
 # 임베딩을 데이터베이스에서 로드
-database = s.dir_path["preprocessing"]
+database = con.dir_path["preprocessing"]
 if os.path.exists('database'):
     for filename in os.listdir('database'):
         if filename.endswith('.npy'):

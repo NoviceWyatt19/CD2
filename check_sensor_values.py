@@ -2,11 +2,11 @@ import serial
 # import threading
 import pandas as pd
 import time
-import settings as s
+import configuration as con
 
 ser = serial.Serial( 
-    port=s.ser_setting['Mac'],
-    baudrate=s.ser_setting['Speed'][0],
+    port=con.ser_setting['Mac'],
+    baudrate=con.ser_setting['Speed'][0],
     timeout= 2
 )
 
@@ -29,7 +29,7 @@ def save_db(db, file):
         db,
         columns=['Sensor1', 'Sensor2', 'Sensor3'],
     )
-    file_path = f'{s.path_tpye['Mac']}Sensor_db/{file}' # 라즈베리파이에서는 경로를 변경해야함
+    file_path = f'{con.path_tpye['Mac']}Sensor_db/{file}' # 라즈베리파이에서는 경로를 변경해야함
     df.to_csv( file_path, index= False)
 
     db.clear()
