@@ -5,7 +5,7 @@ import os
 import numpy as np
 from module_user_face_collector import get_frame
 
-def resize_and_pad(img, size=(160, 160)):
+def resize_N_pad(img, size=(160, 160)):
     h, w, _ = img.shape
     target_h, target_w = size
 
@@ -37,7 +37,7 @@ def detect_N_mark_face(frame, cnt, d_type='img'):
                 bounding_box = person['box']
                 x, y, width, height = bounding_box
                 face = img_rgb[y:y + height, x:x + width]  # Crop face
-                face_160x160 = resize_and_pad(face)  # Resize and pad to 160x160
+                face_160x160 = resize_N_pad(face)  # Resize and pad to 160x160
 
                 # Save the cropped face
                 output_path = f'{con.dir_path["Mac"]["mctnn"]}cropped_face_{cnt}.png'
