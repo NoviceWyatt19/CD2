@@ -3,6 +3,7 @@ import os
 import numpy as np
 from facenet.src import facenet, align  # MTCNN 정렬을 위한 모듈
 import configuration as con
+import random
 
 # 경로 설정
 input_dir = con.dir_path['Mac']['preprocessing']
@@ -46,14 +47,30 @@ def rotate_image(image, angle):
     return rotated
 
 # 이미지 마스킹
-def mask_image(image, start_point=None, end_point=None, mask_size=(100, 100)):
-    (h, w) = image.shape[:2]
-    if not start_point or not end_point:
-        x1, y1 = w // 4, h // 4  # 기본 위치
-        x2, y2 = x1 + mask_size[0], y1 + mask_size[1]
-        start_point, end_point = (x1, y1), (x2, y2)
+# def mask_image(image, start_point=None, end_point=None, mask_size=(100, 100)):
+#     (h, w) = image.shape[:2]
+#     if not start_point or not end_point:
+#         x1, y1 = w // 4, h // 4  # 기본 위치
+#         x2, y2 = x1 + mask_size[0], y1 + mask_size[1]
+#         start_point, end_point = (x1, y1), (x2, y2)
+#     masked_image = image.copy()
+#     cv2.rectangle(masked_image, start_point, end_point, (0, 0, 0), -1)
+#     return masked_image
+def mask_image(image):
     masked_image = image.copy()
-    cv2.rectangle(masked_image, start_point, end_point, (0, 0, 0), -1)
+    h, w = image.shape[:2]
+
+    # 시작점과 마스크 크기를 랜덤하게 설정
+    x1, y1 = random.randint(0, w // 2), random.randint(0, h // 2)
+    mask_width, mask_height = random.randint(50, w // 4), random.randint(50, h // 4)
+    x2, y2 = x1 + mask_width, y1 + mask_height
+    start_point, end_point = (x1, y1), (x2, y2)
+    
+    # 마스크 색상도 랜덤으로 설정 (RGB)
+    mask_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+    
+    # 마스크 적용
+    cv2.rectangle(masked_image, start_point, end_point, mask_color, -1)
     return masked_image
 
 # 이미지 수평 반전
@@ -95,8 +112,8 @@ def augment_images(input_folder, output_folder):
             noisy_image = add_gaussian_noise(image)
             save_image(noisy_image, output_folder, 'noisy', 1)
 
-            # 회전 (30도, 90도, 135도, 180도, 270도)
-            for i, angle in enumerate([30, 90, 135, 180, 270]):
+            # 회전 (5, 10, 15, 20, 25)
+            for i, angle in enumerate([5, 10, 15, 20, 25]):
                 rotated_image = rotate_image(image, angle)
                 save_image(rotated_image, output_folder, 'rotated', angle)
 
@@ -116,10 +133,11 @@ def augment_images(input_folder, output_folder):
             cv2.imwrite(os.path.join(output_folder, flipped_left_filename), flipped['left'])
             cv2.imwrite(os.path.join(output_folder, flipped_right_filename), flipped['right'])
 
-            # RGB 필터링 (Red, Green, Blue 각각 적용)
-            red_filtered = rgb_filter(image, r_factor=1.5, g_factor=0.5, b_factor=0.5)
-            save_image(red_filtered, output_folder, 'red_filtered', 1)
-
+            # RGB 필터를 3:1:1 비율로 적용하여 저장
+            for i in range(3):
+                r_image = rgb_filter(image, r_factor=1.5, g_factor=1.0, b_factor=1.0)
+                save_image(r_image, output_folder, 'R_filtered', f"{filename.split('.')[0]}_R_{i+1}")
+                
             green_filtered = rgb_filter(image, r_factor=0.5, g_factor=1.5, b_factor=0.5)
             save_image(green_filtered, output_folder, 'green_filtered', 1)
 
