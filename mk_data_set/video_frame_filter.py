@@ -1,9 +1,14 @@
+import sys
+import os
+# main folder 경로를 추가
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import configuration as con
 import cv2
 import numpy as np
-import os
 
-max_frame = 100
+
+max_frame = 300
 
 def check_frame_blurriness(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -35,7 +40,7 @@ def adjust_under_exposure(img):
     return cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
 
 def main():
-    cnt = 1
+    cnt = 0
     cap = cv2.VideoCapture(1)
 
     save_dir = con.dir_path['Mac']['cam']  # /Users/wyatt/Desktop/CD2_project/cam_frame/

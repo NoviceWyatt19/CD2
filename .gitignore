@@ -2,4 +2,5 @@ CD2_venv
 Sensor_data_*
 *saved_images*
 *cam_frame*
+*cam_frame1*
 detected_face_frame

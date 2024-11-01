@@ -1,15 +1,14 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import face_detection as ff
 import video_frame_filter as vff
 import time
+from frame_utils import get_frame
 
 cnt = 1
 vff.max_frame = 300
-
-def get_frame(capture):
-    ret, frame = capture.read()
-    if not ret:
-        raise Exception("Failed to grab frame")
-    return frame
 
 # take a picture
 try:
