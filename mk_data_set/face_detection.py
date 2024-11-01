@@ -3,7 +3,7 @@ import configuration as con
 import cv2
 import os
 import numpy as np
-from module_user_face_collector import get_frame
+from mk_data_set.user_face_data_collector import get_frame
 
 def resize_N_pad(img, size=(160, 160)):
     h, w, _ = img.shape
