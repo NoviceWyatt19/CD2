@@ -29,6 +29,42 @@ def resize_N_pad(img, size=(160, 160)):
     new_img = cv2.copyMakeBorder(resized_img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)
     return new_img
 
+def crop_face_with_margin(image, x, y, width, height, target_size=160, margin=0.1):
+    # 마진 추가
+    margin_x = int(width * margin)
+    margin_y = int(height * margin)
+    
+    # 마진을 적용한 새로운 박스 좌표
+    new_x = max(x - margin_x, 0)
+    new_y = max(y - margin_y, 0)
+    new_width = min(width + 2 * margin_x, image.shape[1] - new_x)
+    new_height = min(height + 2 * margin_y, image.shape[0] - new_y)
+    
+    # 박스가 target_size보다 작으면 중심을 기준으로 확장
+    if new_width < target_size or new_height < target_size:
+        center_x = x + width // 2
+        center_y = y + height // 2
+        
+        half_size = target_size // 2
+        new_x = max(center_x - half_size, 0)
+        new_y = max(center_y - half_size, 0)
+        new_width = target_size
+        new_height = target_size
+
+        # 이미지 경계 체크
+        if new_x + new_width > image.shape[1]:
+            new_width = image.shape[1] - new_x
+        if new_y + new_height > image.shape[0]:
+            new_height = image.shape[0] - new_y
+
+    # 얼굴 크롭
+    cropped_face = image[new_y:new_y + new_height, new_x:new_x + new_width]
+    
+    # 리사이즈
+    resized_face = resize_N_pad(cropped_face, size=(target_size, target_size))
+    return resized_face
+
+# detect_N_mark_face 함수에서 crop_face_with_margin을 호출하도록 수정
 def detect_N_mark_face(frame, cnt, d_type='img'):
     detector = MTCNN()
 
@@ -38,32 +74,17 @@ def detect_N_mark_face(frame, cnt, d_type='img'):
         detected = len(result) > 0
 
         if detected:
-            for person in result:  # Mark on the frame
+            for person in result:
                 bounding_box = person['box']
                 x, y, width, height = bounding_box
-                face = img_rgb[y:y + height, x:x + width]  # Crop face
-                face_160x160 = resize_N_pad(face)  # Resize and pad to 160x160
+                face_160x160 = crop_face_with_margin(img_rgb, x, y, width, height)
 
                 # Save the cropped face
-                output_path = os.path.join(con.dir_path["Mac"]["mctnn"],f'cropped_face_{cnt}.png')
+                output_path = os.path.join(con.dir_path["Mac"]["mctnn"], f'cropped_face_{cnt}.png')
                 cv2.imwrite(output_path, cv2.cvtColor(face_160x160, cv2.COLOR_RGB2BGR))
                 print(f"Cropped face saved at {output_path}")
         else:
             print("No face detected.")
-    
-    elif d_type == 'webcam':  # Webcam face detection and drawing rects
-        img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        result = detector.detect_faces(img_rgb)
-
-        if result:
-            for person in result:
-                bounding_box = person['box']
-                x, y, width, height = bounding_box
-                cv2.rectangle(frame,
-                              (x, y),
-                              (x + width, y + height),
-                              (0, 255, 0), 2)
-        return frame
 
 if __name__ == "__main__":
     d_type = 'img'  # 'img' or 'webcam'으로 변경 가능
