@@ -4,3 +4,8 @@ Sensor_data_*
 *cam_frame*
 *cam_frame1*
 detected_face_frame
+gaze1_v1.keras
+finetuned_shape_predictor.dat
+Face Recognition_VGG16_v3.keras
+drowsiness_new6.keras
+DD_model_best.pth

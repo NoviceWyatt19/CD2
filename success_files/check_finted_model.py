@@ -5,7 +5,7 @@ from success_gaze import get_eye_states_from_frame
 
 # Dlib 얼굴 탐지기와 랜드마크 예측기 초기화
 detector = dlib.get_frontal_face_detector()
-predictor = dlib.shape_predictor("/Users/wyatt/Desktop/inst_CD2/CD2_models/shape_predictor_68_face_landmarks.dat")
+predictor = dlib.shape_predictor("/Users/wyatt/Desktop/CD2_project/CD2_models/shape_predictor_68_face_landmarks.dat")
 
 # EAR 계산 함수
 def eye_aspect_ratio(eye):
