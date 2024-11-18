@@ -3,14 +3,14 @@ import torch
 from facenet_pytorch import MTCNN, InceptionResnetV1
 from PIL import Image
 
-# MTCNN과 Inception Resnet V1 모델 초기화
+# MTCNN, Inception Resnet V1 모델
 mtcnn = MTCNN(image_size=160, margin=0)
 resnet = InceptionResnetV1(pretrained='vggface2').eval()
 
 def register_user_embedding(img_folder, save_path='user_embedding.pt'):
     embeddings = []
 
-    # 이미지 파일 목록 가져오기 (.jpg, .png 파일만)
+    
     file_names = [f for f in os.listdir(img_folder) if f.endswith(('.jpg', '.png'))]
 
     for file_name in file_names:
@@ -40,6 +40,6 @@ def register_user_embedding(img_folder, save_path='user_embedding.pt'):
     else:
         print("얼굴이 감지된 이미지가 없습니다.")
 
-# 유저 이미지 폴더 경로
+
 image_folder = '/Users/wyatt/Desktop/inst_CD2/detect_face_user'
 register_user_embedding(image_folder)

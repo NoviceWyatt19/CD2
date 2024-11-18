@@ -49,7 +49,7 @@ class UserRecognitionThread(threading.Thread):
             if not self.frame_queue.empty():
                 frame = self.frame_queue.get()
                 self.user_status = recognize_user_from_frame(frame)
-            time.sleep(0.03)  # 유저 인식 주기
+            time.sleep(0.03) 
 
     def stop(self):
         self.running = False
@@ -80,7 +80,7 @@ class DrowsinessDetectionThread(threading.Thread):
                     ) = detect_drowsy_with_gaze(frame)
                 except Exception as e:
                     print(f"Drowsiness detection error: {e}")
-            time.sleep(0.03)  # 졸음 판단 주기
+            time.sleep(0.03)
 
     def stop(self):
         self.running = False
@@ -180,8 +180,8 @@ def main():
 
     try:
         while True:
-            # FPS 계산
-            start_time = time.time()
+            # # FPS 계산
+            # start_time = time.time()
 
             if drowsiness_thread.processed_frame is not None:
                 frame = drowsiness_thread.processed_frame.copy()
@@ -247,13 +247,13 @@ def main():
         video_thread.stop()
         user_thread.stop()
         drowsiness_thread.stop()
-        # arduino_thread.stop()
+        arduino_thread.stop()
 
         # 스레드 종료 대기
         video_thread.join()
         user_thread.join()
         drowsiness_thread.join()
-        # arduino_thread.join()
+        arduino_thread.join()
 
         # OpenCV 창 닫기
         cv2.destroyAllWindows()

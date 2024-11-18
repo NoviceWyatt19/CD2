@@ -6,32 +6,27 @@ from tensorflow.keras.models import load_model
 # 모델 로드
 gaze_model = load_model("/Users/wyatt/Desktop/CD2_project/CD2_models/working.keras")
 
-# Dlib 얼굴 탐지기와 랜드마크 예측기 초기화
+# Dlib 얼굴 탐지기와 랜드마크 
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor("/Users/wyatt/Desktop/CD2_project/CD2_models/shape_predictor_68_face_landmarks.dat")
 
 
+# gaze model을 위한 전처리
 def preprocess_eye(eye):
-    """
-    눈 이미지를 전처리하여 모델 입력으로 준비합니다.
-    """
     gray_eye = cv2.cvtColor(eye, cv2.COLOR_BGR2GRAY)
     resized_eye = cv2.resize(gray_eye, (60, 60))
     normalized_eye = resized_eye / 255.0
     return np.expand_dims(normalized_eye, axis=(0, -1))
 
-
+# gaze model 출력
 def detect_eye_states(left_eye, right_eye):
-    """
-    왼쪽, 오른쪽 눈의 상태를 모델을 사용하여 감지합니다.
-    """
     left_eye_input = preprocess_eye(left_eye)
     right_eye_input = preprocess_eye(right_eye)
 
     left_prediction = gaze_model.predict(left_eye_input)[0][0]
     right_prediction = gaze_model.predict(right_eye_input)[0][0]
 
-    left_eye_state = "Closed" if left_prediction >= 0.34 else "Open"
+    left_eye_state = "Closed" if left_prediction >= 0.34 else "Open" # 0.6
     right_eye_state = "Closed" if right_prediction >= 0.34 else "Open"
 
     return left_eye_state, right_eye_state
@@ -41,10 +36,8 @@ def detect_eye_states(left_eye, right_eye):
 prev_left_eye_points = None
 prev_right_eye_points = None
 
+# 눈의 랜드마크를 기반으로 눈 영역을 크롭
 def crop_eye_region(frame, eye_points):
-    """
-    눈의 랜드마크를 기반으로 눈 영역을 크롭합니다.
-    """
     eye_center = np.mean(eye_points, axis=0).astype(int)
     y_min = max(0, eye_center[1] - 70)
     y_max = min(frame.shape[0], eye_center[1] + 70)
@@ -58,11 +51,9 @@ def crop_eye_region(frame, eye_points):
         return None
     return cropped
 
-
+# 프레임에서 눈 상태를 반환
+# 랜드마크 탐지 실패 시 이전 프레임 좌표를 사용
 def get_eye_states_from_frame(frame):
-    """
-    프레임에서 눈 상태를 반환합니다. 랜드마크 탐지 실패 시 이전 프레임 좌표를 사용합니다.
-    """
     global prev_left_eye_points, prev_right_eye_points
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -115,7 +106,7 @@ def detect_drowsy_with_gaze(frame, ear_threshold=0.2):
     left_eye_status, right_eye_status = get_eye_states_from_frame(frame)
 
     if len(faces) == 0:
-        # 얼굴이 없을 때 처리
+        # 얼굴이 없을 때 
         processed_frame = frame.copy()
         cv2.putText(
             processed_frame,
@@ -126,7 +117,7 @@ def detect_drowsy_with_gaze(frame, ear_threshold=0.2):
             (0, 0, 255),
             2,
         )
-        # 빈 값을 반환하여 오류 방지
+        # 빈 값을 반환
         return processed_frame, drowsiness_status, ear, "Closed", "Closed", [], []
 
 

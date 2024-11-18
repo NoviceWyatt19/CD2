@@ -4,15 +4,13 @@ import torch
 from PIL import Image
 import numpy as np
 
-# 사전 학습된 MTCNN 및 Inception Resnet V1 모델 초기화
+# MTCNN, Inception Resnet V1 모델
 mtcnn = MTCNN(image_size=160, margin=0)
 resnet = InceptionResnetV1(pretrained='vggface2').eval()
 
-# 등록된 유저 임베딩 (사전에 저장된 유저 얼굴 임베딩 로드)
-user_embedding = torch.load('/Users/wyatt/Desktop/CD2_project/user_embedding.pt')  # 유저 임베딩 파일
-
+# 등록된 유저 임베딩
+user_embedding = torch.load('/Users/wyatt/Desktop/CD2_project/user_embedding.pt')
 def recognize_user_from_frame(frame):
-    # OpenCV 프레임을 PIL 이미지로 변환
     img = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
     img_cropped = mtcnn(img)
     
@@ -22,9 +20,10 @@ def recognize_user_from_frame(frame):
 
         # 유사도 계산
         distance = (user_embedding - current_embedding).norm().item()
-        if distance < 0.85:  # 임계값 
+        if distance < 0.85:  
             return "User recognized"
         else:
             return "User not recognized"
     else:
         return "No face detected"
+    
