@@ -23,6 +23,10 @@ file_type = ['jpeg', 'jpg', 'png']
 # 시리얼 포트 설정
 ser_setting = {
     'Mac': '/dev/cu.usbmodemF412FA6F49D82',
+    'voice1': '/dev/cu.usbmodem1301',
+    'voice2': '/dev/cu.usbmodem11401',
+    'voice3': '/dev/cu.usbmodem1401',
+    'voice4': '/dev/cu.usbmodem11301',
     'test': '/dev/cu.usbmodem101',
     'Raspi': 'need to set',
     'Speed': [9600, 115200],

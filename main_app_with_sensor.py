@@ -19,6 +19,10 @@ class VideoCaptureThread(threading.Thread):
         self.running = True
 
     def run(self):
+        if not self.cap.isOpened():
+            print("Cannot open camera")
+            self.running = False
+            return
         while self.running:
             ret, frame = self.cap.read()
             if not ret:
@@ -30,7 +34,7 @@ class VideoCaptureThread(threading.Thread):
             if not self.frame_queue.full():
                 self.frame_queue.put(frame)
 
-            time.sleep(0.1)  # 약간의 대기 (33ms, 30fps 기준)
+            time.sleep(0.03)  # 약간의 대기 (33ms, 30fps 기준)
 
     def stop(self):
         self.running = False
@@ -80,11 +84,10 @@ class DrowsinessDetectionThread(threading.Thread):
                     ) = detect_drowsy_with_gaze(frame)
                 except Exception as e:
                     print(f"Drowsiness detection error: {e}")
-            time.sleep(0.05)
+            time.sleep(0.03)
 
     def stop(self):
         self.running = False
-
 
 # 아두이노 통신 스레드
 class ArduinoCommunicationThread(threading.Thread):
@@ -93,50 +96,63 @@ class ArduinoCommunicationThread(threading.Thread):
         self.port = port
         self.running = True
         self.connection = None
-        self.oper_state = False
-        self.final_pass = True
-        self.lock = threading.Lock()  # 상태 변경 보호용
+        self.oper_state = "False"  # 기본값 초기화
+        self.final_pass = True     # 기본값 초기화
+        self.sensing_data_store = {"a": "000", "h": "000", "v": "000"}  # 초기 센싱 데이터
+        self.lock = threading.Lock()  # 데이터 보호용
 
     def run(self):
         try:
-            import serial
             self.connection = serial.Serial(self.port, 9600, timeout=1)
             print(f"Connected to Arduino on {self.port}")
         except Exception as e:
-            
             print(f"Failed to connect to Arduino: {e}")
             self.running = False
+            return
         
-        delay_interval = 2.0  # 데이터 전송 주기
+        delay_interval = 1.5  # 데이터 전송 주기
 
         while self.running:
             try:
-                # 상태 전송
-                with self.lock:
+                 # Arduino로 데이터 전송
+                if self.oper_state is not None:  # oper_state가 None이 아닌 경우만 전송
                     self.connection.write((str(self.oper_state) + '\n').encode())
+                    self.connection.flush()  # 전송 강제
                     print(f"Sent to Arduino: {self.oper_state}")
-                    self.connection.flush()
-                    time.sleep(0.05)
-
-                # 메시지 수신
+                    
+                # Arduino로부터 데이터 수신
                 if self.connection.in_waiting > 0:
                     message = self.connection.readline().decode(errors="ignore").strip()
                     print(f"Received from Arduino: {message}")
 
-                    if message == "sensing done":
-                        with self.lock:
-                            self.oper_state = f"FINAL_{'True' if self.final_pass else 'False'}"
-                            print(f"Send final pass value: {self.oper_state}")
-                            self.connection.write((self.oper_state + '\n').encode())
-                            self.connection.flush()
-
-                            # # 초기화
-                            # self.oper_state = "False"
+                    # 센싱 데이터 파싱
+                    if message.startswith("sensing data"):
+                        self.parse_sensing_data(message)
                 # 딜레이 추가
                 time.sleep(delay_interval)
 
             except Exception as e:
                 print(f"Arduino communication error: {e}")
+
+    def parse_sensing_data(self, message):
+        # 센싱 데이터를 파싱하여 저장
+        try:
+            parts = message.split("_")[1].split(",")
+            sensing_data = {
+                "a": parts[0].split(":")[1],
+                "h": parts[1].split(":")[1],
+                "v": parts[2].split(":")[1],
+            }
+            with self.lock:
+                self.sensing_data = sensing_data
+        except Exception as e:
+            print(f"Failed to parse sensing data: {e}")
+
+    def get_sensing_data(self):
+        # 현재 센싱 데이터를 안전하게 반환
+        with self.lock:
+            return self.sensing_data.copy()  # 딕셔너리의 copy() 메서드 호출
+
 
     def update_state(self, oper_state, final_pass):
         # 스레드 안전하게 상태 업데이트
@@ -157,7 +173,7 @@ def main():
     video_thread = VideoCaptureThread(frame_queue)
     user_thread = UserRecognitionThread(frame_queue)
     drowsiness_thread = DrowsinessDetectionThread(frame_queue)
-    arduino_thread = ArduinoCommunicationThread(port=con.ser_setting["voice2"])
+    arduino_thread = ArduinoCommunicationThread(port=con.ser_setting["Mac"])
     
 
     # 스레드 시작
@@ -185,13 +201,25 @@ def main():
     user_threshold = 20
     drowsiness_threshold = 30
 
+    # 추가 변수
+    h_adjusted_value = None  # `s`를 눌렀을 때 계산된 값 저장
+
     try:
         while True:
-            # # FPS 계산
-            # start_time = time.time()
-
             if drowsiness_thread.processed_frame is not None:
                 frame = drowsiness_thread.processed_frame.copy()
+                
+                # 프레임 크기 초기화
+                height, width, _ = frame.shape
+                
+                # 센싱 데이터 가져오기
+                sensing_data = arduino_thread.get_sensing_data()
+                try:
+                    a_value = sensing_data['a']
+                    h_value = sensing_data['h']
+                    v_value = sensing_data['v']
+                except KeyError:
+                    a_value, h_value, v_value = "N/A", "N/A", "N/A"
 
                 # 유저 상태 업데이트 로직
                 current_user_status = user_thread.user_status
@@ -224,13 +252,32 @@ def main():
                     drowsiness_status_frame_count["Little Drowsy"] = 0
                 
                 # 유저 상태 업데이트
-                    if user_recognition_score > user_threshold:
-                        oper_state = True
-                    else:
-                        oper_state = False
+                if user_recognition_score > user_threshold:
+                    oper_state = "True"
+                else:
+                    oper_state = "False"
 
                 # 아두이노 상태 업데이트
                 arduino_thread.update_state(oper_state, final_pass)
+
+                # 키 입력 처리
+                key = cv2.waitKey(1) & 0xFF
+                if key == ord('q'):  # 'q'를 누르면 종료
+                    break
+                elif key == ord('s'):  # 's'를 누르면 H 값 + 70 계산
+                    try:
+                        h_adjusted_value = int(h_value) + 70
+                    except (ValueError, KeyError):
+                        print("Invalid H value received from Arduino")
+                        h_adjusted_value = None
+
+                # 센싱 데이터 출력
+                cv2.putText(frame, f"A: {a_value}", (width - 150, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
+                cv2.putText(frame, f"H: {h_value}", (width - 150, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
+                cv2.putText(frame, f"V: {v_value}", (width - 150, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 255), 2)
+
+        
+
 
                 # 프레임에 상태 및 점수 출력
                 cv2.putText(frame, f"User: {user_thread.user_status}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
@@ -238,17 +285,13 @@ def main():
                 cv2.putText(frame, f"EAR: {drowsiness_thread.ear:.2f}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
                 # 왼쪽 하단에 점수 출력
-                height, width, _ = frame.shape
                 cv2.putText(frame, f"User Score: {int(user_recognition_score)}", (10, height - 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
                 cv2.putText(frame, f"Drowsy Score: {int(drowsiness_score)}", (10, height - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
                 
                 # 처리된 프레임 디스플레이
                 cv2.imshow("Drowsiness Detection", frame)
 
-            # 'q' 키를 누르면 종료
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-
+          
     finally:
         # 스레드 정지
         video_thread.stop()
