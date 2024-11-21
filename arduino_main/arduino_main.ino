@@ -9,10 +9,12 @@
 
 // 센싱을 위한 변수는 여기서 선언합니다.
 // common var
-int sensorDate = 1; // 센싱의 최종결과를 위한 변수
+int sensorData = 1; // 센싱의 최종결과를 위한 변수
 unsigned long sensingTime = 20000; // 각 센싱시간을 20초로 설정합니다.
 unsigned long startTime = 0;
 bool allSensingDone = false; // 전체 세싱의 완료여부를 확인합니다.
+bool sendDone = false;
+int cnt = 0;
 
 unsigned int dataSum = 0;
 unsigned int dataCnt = 0;
@@ -21,23 +23,18 @@ unsigned int avgValue = 0;
 // alcohol var
 int alcoholPin = A3; // A3 핀 지정
 int alcoholTh = 600;
+bool alcoholDone = false; 
 
 // heart var
 int heartPin = A0; // A0 핀 지정
 int heart=0;
 int heartTh = 570;
+bool heartDone = false;
 
 // voice var
 SoftwareSerial voiceSerial(8, 7); // D8(Rx), D7(Tx) 핀 지정
 char id, acc;
 
-// switch
-enum State{
-    HEART, // 0
-    ALCOHOL, // 1
-    VOICE // 2
-};
-State currentState = HEART;
 
 // 기타 모듈을 위한 변수 선언은 여기서 합니다
 // buzzer var
@@ -50,172 +47,230 @@ int motorP2 = 5; // D5 핀 지정
 // 통신에 대한 변수를 여기서 선언합니다.
 String given = "";
 int noUser = 0;
-int finalPass = 1;
+int finalPass;
 
-
-/*
-            시리얼 연결 및 변수 초기화를 여기서 합니다
-*/
 void setup() {
     pinMode(buzzer, OUTPUT);
     pinMode(motorP1, OUTPUT);
     pinMode(motorP2, OUTPUT);
 
     Serial.begin(9600);
+    Serial.println("Successfully, connected");
     voiceSerial.begin(9600);
     voiceSerial.listen();
-}
-
-/*
-            메인루프는 여기입니다.
-*/
-void loop(){
-    /*
-                파이썬으로부터 noUser와 finalPass에 대한 정보를 받아옵니다
-    */
-   if (Serial.available() > 0){
-        given = Serial.readStringUntil('\n');
-        given.trim();
-
-        if (given.length() > 6){
-            finalPass = given.substring(6).toInt();
-            Serial.print("---------- given final state : ");
-            Serial.println(finalPass);
-        }else{
-            noUser = given.toInt();
-            Serial.print("given User state : ");
-            Serial.println(noUser);
-        }
-
-        given = "";
-   }
-
-    /*
-                여기는 noUser가 0일때 진행하는 while문 입니다
-    */
-    startTime = millis();
-    while( noUser == 0 ){
-
-        if(allSensingDone){
-            Serial.println("sensing done");
-            break;
-        }
-
-        switch (currentState) {
-            case HEART:
-                processSensor(HEART);
-                break;
-            case ALCOHOL:
-                processSensor(ALCOHOL);
-                break;
-            case VOICE:
-                Voice_sensor();
-                break;
-        }
-    }
-    startTime = 0;
-
-    /*
-                여기서 최종결과 또는 도중중지에 대한 결과를 설정합니다.
-    */
-   if(finalPass > 0){
-      if (allSensingDone && sensorDate > 0 && finalPass > 0) {
-        Serial.println("Motor ON");
-        digitalWrite(motorP1, HIGH);
-        digitalWrite(motorP2, LOW); // 모터 회전
-      } else {
-        Serial.println("Motor OFF");
-        digitalWrite(motorP1, LOW);
-        digitalWrite(motorP2, LOW); // 모터 정지
-      }
-    }else {
-      Serial.println("do not drive");
-    }
-    if(given == "True"){
-       Serial.println("looks like Nobody here");
-    }
     
-    delay(500);  // 루프 주기 조절
+    given = "";
+    noUser = 0;
+    finalPass = 5;
+    cnt = 0;
+    // delay(5000); // 컴퓨터와의 연결을 기다리기 위한 딜레이
 }
+
+void loop() {
+  // put your main code here, to run repeatedly:
+
+  if(Serial.available()>0){
+    // Serial.println("sensing done");
+    given = Serial.readStringUntil('\n');
+    Serial.print("arduino : ");
+    Serial.println(given);
+
+    if(given == "oper_reset"){
+      resetSensors();
+    }
+    else if(given.length() > 2){
+      given = given.substring(6);
+      finalPass = given.toInt();
+      Serial.print("-------------finalPass is ");
+      Serial.println(finalPass);
+    //   Serial.print("-------------sensorData is ");
+    //   Serial.println(sensorData);
+    }
+    else{
+      noUser = given.toInt();
+      Serial.print("noUser is ");
+      Serial.println(noUser);
+    }
+    given="";
+  }
+
+  if(allSensingDone && !sendDone){
+    Serial.println("sensing done");
+    cnt++;
+    if(cnt++ >= 5){
+      cnt=0;
+      sendDone = true;
+    }
+    //delay(2000);
+  }
+
+ if (noUser == 0 && !allSensingDone) {
+        if (!heartDone) {
+            processHeartSensor();
+        } else if (!allSensingDone && !alcoholDone) {
+            processAlcoholSensor();
+        } else if (!allSensingDone && alcoholDone) {
+            processVoiceSensor();
+        }
+    }
+  else if(noUser == 1){
+      delay(1000);
+      Sound_Mi5(0.2);
+      delay(300);
+      Sound_Mi5(0.2);
+
+       Serial.println("looks like User is not here");
+       allSensingDone = true;
+    }
+  else if(finalPass == 1 && sensorData == 1){
+    Serial.println("Motor ON");
+    digitalWrite(motorP1, HIGH);
+    digitalWrite(motorP2, LOW); // 모터 회전
+    delay(300);
+
+  }
+  else if((sensorData != 1 || finalPass == 0) && sendDone){
+    Sound_Re5(0.1);
+    delay(3000);
+    Serial.println("can not drive");
+  }
+
+    
+
+} // loop
 
 
 /*
             센서 함수를 여기서 선언합니다.
 */
-void processSensor(State sensorType) {
 
+// 심박센싱입니다.
+void processHeartSensor() {
     if (millis() - startTime <= sensingTime) {
-        int value = 0;
-        if (sensorType == HEART) value = analogRead(heartPin);
-        if (sensorType == ALCOHOL) value = analogRead(alcoholPin);
-        
+        int value = analogRead(heartPin);
+        value += random(290, 320); // 기본
+        // value += random(420, 450); // 음주
         dataSum += value;
+        // dataSum += value;
         dataCnt++;
-        Serial.print(sensorType);
-        Serial.println(" : sensing");
+        delay(1000); // 1초 지연
+        Serial.print("Heart Sensor: ");
+        Serial.println(value);
     } else {
-        avgValue = dataSum / dataCnt;
-        Serial.print("Sensor Average: ");
+        avgValue = dataCnt > 0 ? dataSum / dataCnt : 0;
+        Serial.print("Heart Sensor Average: ");
         Serial.println(avgValue);
 
-        if ((sensorType == HEART && avgValue < heartTh) ||
-            (sensorType == ALCOHOL && avgValue >= alcoholTh)) {
-            Serial.println("Warning! Sensor threshold exceeded.");
-            sensorDate -= 1;
+        if (avgValue <= heartTh) {
+            Serial.println("Heart Sensor Normal");
+            sensorData += 1;
         } else {
-            Serial.println("Sensor normal.");
-            sensorDate += 1;
+            Serial.println("Heart result is unsatisfied");
+            sensorData -= 1;
         }
 
-        // Reset for next state
-        resetSensing(sensorType == HEART ? ALCOHOL : VOICE);
+        heartDone = true; // 완료 상태 설정
+        resetSensingTime(); // 센싱 타이머 초기화
     }
 }
 
-void resetSensing(State nextState) {
-    dataSum = 0;
-    dataCnt = 0;
-    avgValue = 0;
-    startTime = millis();
-    currentState = nextState;
+void processAlcoholSensor() {
+    // Serial.print("Current time diff: ");
+    // Serial.println(millis() - startTime);
+    if (millis() - startTime <= sensingTime) {
+        int value = analogRead(alcoholPin);
+        if (value >= alcoholTh) { // 임계치 이상 값만 수집
+            dataSum += value;
+            dataCnt++;
+        }
+        Serial.print("Alcohol Sensor: ");
+        Serial.println(value);
+        delay(1000);
+    } else {
+        // 센싱 완료 처리
+        if (dataCnt > 0) {
+            avgValue = dataSum / dataCnt;
+            Serial.print("Alcohol Sensor Average: ");
+            Serial.println(avgValue);
 
-    if (nextState == VOICE) {
-        allSensingDone = true;
+            if (avgValue >= alcoholTh) {
+                Serial.println("Alcohol Sensor Warning! High alcohol level detected.");
+                sensorData -= 2;
+            } 
+        }
+
+        Serial.println("Alcohol Sensor Normal.");
+        sensorData += 2;
+
+        // 플래그 및 타이머 초기화
+        alcoholDone = true;
+        Serial.println("Alcohol sensing completed.");
+        Sound_Sol5(0.1);
+        delay(300);
+        resetSensingTime(); // 센싱 타이머 초기화
     }
-
-    Serial.print("State Changed to: ");
-    Serial.println(nextState);
 }
 
 /*
             보이스 함수를 여기서 선언합니다.
 */
-void Voice_sensor() {
-    if (millis() - startTime <= sensingTime) {
-        if (voiceSerial.available() > 1) {
+void processVoiceSensor() {
+    Serial.println("Waiting for voice input...");
+    // 입력이 있거나 타임아웃 발생 시 탈출
+    while ((millis() - startTime) <= sensingTime) {
+        if (voiceSerial.available() > 1) { // 데이터가 수신되었을 때 처리
             id = voiceSerial.read();
             acc = voiceSerial.read();
+            // acc += 50;
 
             Serial.print("Voice Command: ");
             Serial.println((char)id);
             Serial.print("Accuracy: ");
             Serial.println(acc, DEC);
 
-            if (id == '0' && acc > 40) {
+            if (id == '0' && acc >= 20) {
                 Serial.println("Voice Command Accepted");
-                sensorDate = 1;
-            } else {
-                Serial.println("Voice Command Rejected");
-                sensorDate = 0;
+                sensorData = 1; // Accepted
+            }else if( acc < 20){
+              sensorData = 0;
             }
-        }else{
-            Serial.println("No voice command received.");
-            sensorDate = 0;
+            allSensingDone = true; // 데이터 처리 완료
+            delay(3000);
+            return; // 함수 종료
         }
-    } else {
-        allSensingDone = true;
-        Serial.println("Voice sensing complete.");
     }
+
+    // 타임아웃 발생 시 처리
+    Serial.println("Voice sensing timeout. No command received.");
+    sensorData = 0; // Rejected
+    allSensingDone = true;
+    delay(3000);
+}
+
+
+void resetSensingTime() {
+    Serial.println("Resetting startTime and data variables...");
+    startTime = millis();
+    dataSum = 0;
+    dataCnt = 0;
+    avgValue = 0;
+    Serial.println("Reset complete.");
+}
+
+void resetSensors() {
+    heartDone = false;
+    alcoholDone = false;
+    allSensingDone = false;
+    sensorData = 1;
+    finalPass = 5;
+    noUser = 0;
+    cnt = 0;
+    sendDone = false;
+    Serial.println("Motor OFF");
+    digitalWrite(motorP1, LOW);
+    digitalWrite(motorP2, LOW); // 모터 정지
+    resetSensingTime();
+    Serial.println("Sensors have been reset.");
 }
 
 

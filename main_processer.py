@@ -182,7 +182,7 @@ class ArduinoCommunicator(threading.Thread):
         self.pending_final_pass = None  # 요청된 final_pass 값 (활성화 대기 중)
         self.final_pass_active = False  # FINAL 값 전송 활성화 플래그
         self.last_sent_time = time.time()
-        self.reset_active = False
+        self.reset_active = True
         self.ser = None
 
         # 시리얼 포트 연결
@@ -203,15 +203,15 @@ class ArduinoCommunicator(threading.Thread):
         """
         current_time = time.time()
         if current_time - self.last_sent_time >= self.send_interval:
-            if self.final_pass_active and self.final_pass:
+            if self.final_pass_active:
                 self.ser.write(f"FINAL_{self.final_pass}\n".encode())  # FINAL 값 전송
-                print(f"Sent: {self.final_pass}")
-            elif self.reset_active == True:
+                print(f"Sent: FINAL_{self.final_pass}")
+            elif self.reset_active:
                 for _ in range(3):
                     self.ser.write("oper_reset\n".encode())  # 초기화 명령문 전송
                     time.sleep(0.02)
                 self.reset_active = False
-            else:
+            elif not self.reset_active:
                 self.ser.write(f"{self.oper_state}\n".encode())  # 기본 상태 전송
                 print(f"Sent: {self.oper_state}")
             self.last_sent_time = current_time
@@ -226,9 +226,9 @@ class ArduinoCommunicator(threading.Thread):
 
             # 아두이노에서 'sensing done' 메시지 수신 시 final_pass 활성화
             if response == "sensing done": # and self.pending_final_pass
-                self.final_pass = self.pending_final_pass
+                # self.final_pass = self.pending_final_pass
                 self.final_pass_active = True
-                self.pending_final_pass = None  # 대기 중 값을 초기화
+                # self.pending_final_pass = None  # 대기 중 값을 초기화
                 print(f"Activated final_pass: {self.final_pass}")
 
     def run(self):
@@ -292,7 +292,7 @@ def main():
     drowsiness_threshold = 30
 
     try:
-        arduino_thread.reset_active = True
+
         while True:
             if drowsiness_thread.processed_frame is not None:
                 frame = drowsiness_thread.processed_frame.copy()
@@ -330,6 +330,7 @@ def main():
                 # 유저 상태 업데이트
                 if user_recognition_score > user_threshold:
                     arduino_thread.oper_state = 1
+                    arduino_thread.final_pass = 0
 
                 if drowsiness_score > drowsiness_threshold:
                     arduino_thread.final_pass = 0
